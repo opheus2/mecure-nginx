@@ -1,0 +1,25 @@
+services:
+  mercure:
+    restart: unless-stopped
+    image: dunglas/mercure:latest
+    environment:
+      SERVER_NAME: ":80"
+      # Change the following if you’re using a transport (e.g. Redis, PostgreSQL…)
+      # MERCURE_TRANSPORT_URL: "bolt://mercure.db"
+      MERCURE_PUBLISHER_JWT_KEY: "${MERCURE_PUBLISHER_JWT_KEY:-putYourPublisherHashKeyHereCanBeLongString}"
+      MERCURE_SUBSCRIBER_JWT_KEY: "${MERCURE_SUBSCRIBER_JWT_KEY:-putYourSubscriberHashKeyHereCanBeLongString}"
+      # CORS + anonymous subscription directives see https://mercure.rocks/docs/hub/config for more info
+      MERCURE_EXTRA_DIRECTIVES: |-
+        cors_origins http://127.0.0.1 http://localhost
+        heartbeat 10s
+        ui
+        anonymous
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - mercure
+    ports:
+      - "${APP_PORT:-80}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: always
